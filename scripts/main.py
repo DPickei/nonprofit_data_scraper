@@ -151,7 +151,7 @@ def initialize_db(output_db_path):
             person_name TEXT,
             title TEXT,
             hours_per_week REAL,
-            club_name TEXT,
+            org_name TEXT,
             year INTEGER,
             total_revenue INTEGER,
             city TEXT,
@@ -170,9 +170,9 @@ def insert_officer_data(output_db_path, officers):
     # Insert each officer entry
     for officer in officers:
         cursor.execute('''
-            INSERT INTO officers (person_name, title, hours_per_week, club_name, year, total_revenue, city, state)
+            INSERT INTO officers (person_name, title, hours_per_week, org_name, year, total_revenue, city, state)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (officer['Person Name'], officer['Title'], officer['Hours Per Week'], officer['Club Name'], officer['Year'],
+        ''', (officer['Person Name'], officer['Title'], officer['Hours Per Week'], officer['Org Name'], officer['Year'],
                officer['Total Revenue'], officer['City'], officer['State']))
     conn.commit()
     conn.close()
@@ -304,10 +304,10 @@ def extract_officers(xml_file, year):
     # Namespace is crucial for finding elements
     ns = {'efile': 'http://www.irs.gov/efile'}
 
-    # Extract the club name
-    club_name_path = './/efile:Filer/efile:BusinessName/efile:BusinessNameLine1Txt'
-    club_name_element = root.find(club_name_path, namespaces=ns)
-    club_name = club_name_element.text if club_name_element is not None else "Unknown Club"
+    # Extract the org name
+    org_name_path = './/efile:Filer/efile:BusinessName/efile:BusinessNameLine1Txt'
+    org_name_element = root.find(org_name_path, namespaces=ns)
+    org_name = org_name_element.text if org_name_element is not None else "Unknown Org"
 
     # Extract total revenue
     total_revenue_path = './/efile:TotalRevenueGrp/efile:TotalRevenueColumnAmt'
@@ -349,7 +349,7 @@ def extract_officers(xml_file, year):
             "Person Name": person_name.text if person_name is not None else "N/A",
             "Title": title.text if title is not None else "N/A",
             "Hours Per Week": hours_per_week.text if hours_per_week is not None else "N/A",
-            "Club Name": club_name,
+            "Org Name": org_name,
             "Year": year,
             "Total Revenue": total_revenue,  # Add the total revenue to the dictionary
             "City": city,  # Add city

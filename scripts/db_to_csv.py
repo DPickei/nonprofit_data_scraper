@@ -19,13 +19,13 @@ def main(input_file=None, csv_file_name=None):
 
     # Define the file paths
     input_path = rf'{input_file}'
-    output_path = os.path.join(assumptions.project_folder_location, "Outputs", csv_file_name)
+    output_path = os.path.join(assumptions.output_csv_path_folder, csv_file_name)
 
     # Connect to the SQLite database
     conn = sqlite3.connect(input_path)
 
     # Query the database to select all from your table
-    query = ("""SELECT state, city, hours_per_week, years_of_service, title, club_name, person_name
+    query = ("""SELECT state, city, hours_per_week, years_of_service, title, org_name, person_name
              FROM nonprofit_board_members""")
     df = pd.read_sql_query(query, conn)
 
