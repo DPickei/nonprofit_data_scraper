@@ -32,9 +32,8 @@ This tool, in conjuction with the required XML files downloaded (see below), off
 
 2. execute 'python folder_initialization.py'
 
-3. Download desired years of 990 data from [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) for all available 990 filings. zip data must have the corresponding
-index file downloaded to be parsed.
+3. Download desired years of 990 data from [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) into 'nonprofit_raw_data > xml_files'. Ignore 'Index file for YYYY (CSV)'.
 
-4. Execute 'index_converter.py' and 'object_id_to_zip_address_database_maker'
+4. Execute 'object_id_to_zip_address_database_maker'
 
 5. Execute main.py with desired nonprofit EINs in a .db file or manually entered.
