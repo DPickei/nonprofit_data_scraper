@@ -22,7 +22,7 @@ _Note  The columns above represent data points currently collected. However, any
 
 # Why was this tool made?
 
-This tool was made to allow for convenient collection of data nonprofits disclose.
+This tool was made to allow for comprehensive collection of data nonprofits disclose.
 
 The existing [API](https://projects.propublica.org/nonprofits/api) from [ProPublica](https://www.propublica.org/) carries two restrictions that served as inspiration for the creation of this tool.
 
