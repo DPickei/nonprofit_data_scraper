@@ -20,7 +20,7 @@ db_or_manual_entry = "enter" # Options are: "enter" and "upload". Upload will re
 ein_file_name = "example_storage.db" # If you choose "upload" for db_or_manual_entry, this will specify the .db file
                                   # to extract EINs from
 
-output_preference = "csv" # This determines how the parsed data is stored. Options are: "csv", "sql", and "both"
+output_preference = "both" # This determines how the parsed data is stored. Options are: "csv", "sql", and "both"
 
 output_db_file_name = current_datetime # Filename option for the created .db file. Use 'datetime' for current datetime.
 
