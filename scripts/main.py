@@ -135,7 +135,10 @@ def gather_eins(condition, db_or_manual_entry):
                 break
         ein_list = get_eins_from_db(ein_db_file_path)
     elif condition == "input_from_assumptions" and db_or_manual_entry == "enter":
-        ein_list = assumptions.ein_list
+        if len(sys.argv) > 2:
+            ein_list = sys.argv[2:]
+        else:
+            ein_list = assumptions.ein_list
     elif condition == "input_from_assumptions" and db_or_manual_entry == "upload":
         ein_list = get_eins_from_db(assumptions.ein_db_file)
     return ein_list
