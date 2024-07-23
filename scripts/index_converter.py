@@ -9,35 +9,35 @@ import assumptions
 def convert_csv_to_db():
     csv_index_path = assumptions.csv_index_path
     print("Found csv_index_path")
-    db_index_path = assumptions.db_index_path
+    annual_indexes = assumptions.annual_indexes
     print("Found .db index path")
     
     print("Starting the conversion process...")
     
-    # Ensure the db_index_path directory exists
-    if not os.path.exists(db_index_path):
-        os.makedirs(db_index_path)
-        print(f"Created directory: {db_index_path}")
+    # Ensure the annual_indexes directory exists
+    if not os.path.exists(annual_indexes):
+        os.makedirs(annual_indexes)
+        print(f"Created directory: {annual_indexes}")
     else:
-        print(f"Directory exists: {db_index_path}")
+        print(f"Directory exists: {annual_indexes}")
 
-    # Get the list of CSV files and existing DB files in the db_index_path folder
+    # Get the list of CSV files and existing DB files in the annual_indexes folder
     csv_files = [f for f in os.listdir(csv_index_path) if f.endswith('.csv')]
-    db_files = [f for f in os.listdir(db_index_path) if f.endswith('.db')]
+    db_files = [f for f in os.listdir(annual_indexes) if f.endswith('.db')]
     
     print(f"Found {len(csv_files)} CSV files in {csv_index_path}")
-    print(f"Found {len(db_files)} DB files in {db_index_path}")
+    print(f"Found {len(db_files)} DB files in {annual_indexes}")
 
     # Process each CSV file
     for csv_file in csv_files:
         db_file_name = csv_file.replace('.csv', '.db')
 
         if db_file_name in db_files:
-            print(f"Skipping {csv_file} as corresponding DB file already exists in db_index_path.")
+            print(f"Skipping {csv_file} as corresponding DB file already exists in annual_indexes.")
             continue
 
         csv_path = os.path.join(csv_index_path, csv_file)
-        db_path = os.path.join(db_index_path, db_file_name)
+        db_path = os.path.join(annual_indexes, db_file_name)
 
         print(f"Processing {csv_file}...")
 

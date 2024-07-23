@@ -5,21 +5,21 @@ import os
 import sqlite3
 import pandas as pd
 
-def main(input_file=None, csv_file_name=None):
+def main(input_file=None, output_csv_file_name=None):
 
     # Prompt the user for the input and output file names if not provided
     if input_file is None:
         input_file = input("Enter the name of the input SQLite database file (without extension if not provided): ")
-    if csv_file_name is None:
-        csv_file_name = input("Enter the name of the output CSV file (without extension if not provided) Example format - 5.22.2024_additional_uploads: ")
+    if output_csv_file_name is None:
+        output_csv_file_name = input("Enter the name of the output CSV file (without extension if not provided) Example format - 5.22.2024_additional_uploads: ")
 
     # Ensure the output file ends with '.csv'
-    if not csv_file_name.endswith('.csv'):
-        csv_file_name += '.csv'
+    if not output_csv_file_name.endswith('.csv'):
+        output_csv_file_name += '.csv'
 
     # Define the file paths
     input_path = rf'{input_file}'
-    output_path = os.path.join(assumptions.output_csv_path_folder, csv_file_name)
+    output_path = os.path.join(assumptions.output_csv_path_folder, output_csv_file_name)
 
     # Connect to the SQLite database
     conn = sqlite3.connect(input_path)
@@ -38,7 +38,9 @@ def main(input_file=None, csv_file_name=None):
     df.to_csv(output_path, index=False)
 
     # Close the connection
+    conn.close()
 
+    print("csv file created")
 
 if __name__ == "__main__":
     main()

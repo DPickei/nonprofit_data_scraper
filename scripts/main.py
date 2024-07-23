@@ -1,6 +1,6 @@
-# Purpose. This is the main script that will end to end do the following
-# 1. Take a database of EINs and find their corresponding object_ids
-# 2. Feed those object_ids into a function that will return officer data into a .db file 
+# Purpose: Core logic to execute the following
+# 1. Take EINs provided by the user
+# 2. Output personnel information of the board for each EIN
 
 import sys
 import assumptions
@@ -13,135 +13,151 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 def main():
-    # Define input variables depending if the user is using assumptions, command line arguments, or manual entries
+    # See if the user would like to manually enter values or use 'assumptions.py'
+    condition = get_user_input_preference()
+    
+    # Declare values for input variables
+    db_or_manual_entry = determine_ein_source(condition)
+    output_preference = determine_output_preference(condition)
+    output_db_path = make_sql_output_file(condition)
+    output_csv_file_name = make_csv_output_file(condition, output_preference)
+    ein_list = gather_eins(condition, db_or_manual_entry)
 
-    # Input variables if the user enters command line arguments
-    if len(sys.argv) == 6 and sys.argv[1] != "assumptions":
-        upload_db_or_enter_manually = sys.argv[1]
-        output_preference = sys.argv[2]
-        # allow the user to use the current datetime as a valid filename, so that they can avoid duplicates when
-        # reusing the same command line entry
-        if sys.argv[3] == "datetime":
-            output_db_path = assumptions.output_db_path
-        else:
-            output_db_path = os.path.join(assumptions.output_db_path_folder, f"{sys.argv[3]}.db")
-        user_entered_eins = [sys.argv[4]]
-        if sys.argv[5] == "datetime":
-            csv_file_name = assumptions.csv_file_name
+    # With the EINs, we can find object IDs. I.e., the filenames of our 990s.
+    filenames = query_object_id_by_ein(ein_list)
 
-    # Input variables if the user wishes to have their assumptions entered
-    elif sys.argv[1] == "assumptions":
-        upload_db_or_enter_manually = assumptions.upload_db_or_enter_manually
-        output_preference = assumptions.output_preference
-        output_db_path = assumptions.output_db_path
-        user_entered_eins = []
-        if len(sys.argv) > 2:
-            for ein in sys.argv[2:]:
-                user_entered_eins.append(ein)
-        else:
-            user_entered_eins = assumptions.user_entered_eins
-        csv_file_name = assumptions.csv_file_name
-        
-    # Input variables if the user wishes for manual entry
+    # Create the table to put our data into
+    initialize_db(output_db_path)
+
+
+    # --- Start of ETL process ---
+
+    # Extract 990 data from identified filenames and place into output_db_path (.db) for transformations
+    gather_and_load_990_data_into_db(filenames, output_db_path)
+
+    # Transform the .db file created
+    board_of_dir_table_make.main(output_db_path)
+
+    # Load output to CSV if requested by user
+    if output_preference in ["csv", "both"]:
+        db_to_csv.main(output_db_path, output_csv_file_name)
+
+    # --- End of ETL process ---
+
+
+    # Delete the .db file if the user has specified just for a CSV file returned
+    if output_preference == "csv":
+        os.remove(output_db_path)
+
+
+def get_user_input_preference():
+    if len(sys.argv) == 1:
+        condition = "input_asked"
+    elif len(sys.argv) > 1 and sys.argv[1] == "assumptions":
+        condition = "input_from_assumptions"
     else:
-        # Ask user how they want to input data
-        while True:
-            upload_db_or_enter_manually = input("Would you like to enter the EIN or upload a DB file (enter/upload_db): ")
-            if upload_db_or_enter_manually != "enter" and upload_db_or_enter_manually != "upload_db":
-                print("Answer must be 'enter' or 'upload_db'")
-                continue
-            else:
-                break
-        
-        # Ask user how they want to output data
-        while True:
-            output_preference = input("How would you like to receive your output? (modified_.db, raw_.db, csv): ")
-            if output_preference != "raw_.db" and output_preference != "csv" and output_preference != "modified_.db":
-                print("Output preference must be one of the following: raw_.db, modified_.db, or csv")
-                continue
-            else:
-                break
+        print("invalid entry")
+        sys.exit()
+    return condition
 
-        # Initialize the output database
+
+def determine_ein_source(condition):
+    if condition == "input_asked":
+        while True:
+            db_or_manual_entry = input("Would you like to enter the EIN or upload a DB file (enter/upload): ")
+            if db_or_manual_entry != "enter" and db_or_manual_entry != "upload":
+                print("Answer must be 'enter' or 'upload'")
+                continue
+            else:
+                break
+    elif condition == "input_from_assumptions":
+        db_or_manual_entry = assumptions.db_or_manual_entry
+    return db_or_manual_entry
+
+def determine_output_preference(condition):
+    if condition == "input_asked":
+        while True:
+            output_preference = input("How would you like to receive your output? (sql, csv, both): ")
+            if output_preference not in ["sql", "csv", "both"]:
+                print("Output preference must be one of the following: 'sql', 'csv', or 'both'")
+                continue
+            else:
+                break
+    elif condition == "input_from_assumptions":
+        output_preference = assumptions.output_preference
+    return output_preference
+
+
+def make_sql_output_file(condition):
+    if condition == "input_asked":
         output_db_path_folder = assumptions.output_db_path_folder
-        output_db_path_name = input("Enter the name of the database you'd like to make (.db): ")
+        output_db_path_name = input("Enter the name of the database (.db file) you'd like to make. Use 'datetime' for current datetime: ")
+        if output_db_path_name == "datetime":
+            output_db_path_name = assumptions.current_datetime
         output_db_path_name = "\\" + output_db_path_name
         if not output_db_path_name.endswith(".db"):
             output_db_path_name += ".db"
         output_db_path = output_db_path_folder + output_db_path_name
-        
-        # Let the user decide what .db file they want to pull EINs from
-        if upload_db_or_enter_manually == "upload_db":
-            recreational_nonprofit_eins_file_name = input("Enter the name of the file you'd like to pull EINs from: ")
-            recreational_nonprofit_eins_file_name = "\\" + recreational_nonprofit_eins_file_name
-            if not recreational_nonprofit_eins_file_name.endswith(".db"):
-                recreational_nonprofit_eins_file_name += ".db"
-            recreational_nonprofit_eins_path = os.path.join(assumptions.output_db_path_folder, recreational_nonprofit_eins_file_name)
-        else:
-            user_entered_eins = []
-            print('Type esc or exit to end entries')
-            while True:
-                entry = input('EIN: ')
-                if entry == 'esc' or entry == 'exit':
-                    break
-                else:
-                    user_entered_eins.append(entry)
-        
-        # Establish name of outputted CSV file if desired
-        if output_preference == "csv":
-            csv_file_name = input("Enter the name of the output CSV file: ")
+    elif condition == "input_from_assumptions":
+        output_db_path = assumptions.output_db_path
+    return output_db_path
 
-    # Initialize database with officer table
-    initialize_db(output_db_path)
 
-    # Establish path to index
-    ein_db_path = assumptions.db_index_path  # Changed from assumptions.ein_db_path to assumptions.db_index_path
-        
-    # Get the object ids by querying with EINs from your database of nonprofit EINs
-    if upload_db_or_enter_manually == 'upload_db':
-        filenames = query_object_id_by_ein(ein_db_path, recreational_nonprofit_eins_path, upload_db_or_enter_manually)
-    else:
-        # Get the object ids by querying with EINs entered from the user
-        filenames = query_object_id_by_ein(ein_db_path, user_entered_eins, upload_db_or_enter_manually)
+def make_csv_output_file(condition, output_preference):
+    if condition == "input_asked" and output_preference in ["csv", "both"]:
+        output_csv_file_name = input("Enter the name of the output CSV file. Use 'datetime' for current datetime: ")
+        if output_csv_file_name == "datetime":
+            output_csv_file_name = assumptions.current_datetime
+    elif condition == "input_from_assumptions":
+        output_csv_file_name = assumptions.output_csv_file_name
+    return output_csv_file_name
 
-    # Start XML parsing through each obj_id returned
-    for filename in filenames:
-        print("Filename:", filename)
-        year = filename[:4]  # Extract the year from the filename
-        if '_public.xml' not in filename:
-            filename += "_public.xml"
-        zip_file_path, xml_file_path = find_file(filename)
-        
-        if zip_file_path and xml_file_path:
-            extract_path = os.path.join(zip_folder_path, 'extracted')
-            extract_specific_file(zip_file_path, xml_file_path, extract_path)
-            extracted_xml_path = os.path.join(extract_path, xml_file_path)
-            
-            if os.path.exists(extracted_xml_path):
-                print(f"Found XML file: {extracted_xml_path}")
-                officers = extract_officers(extracted_xml_path, year)  # Pass the year to the function
-                print("Officers Found")
-                # Within your main logic:
-                insert_officer_data(output_db_path, officers)
-                print("Successfully uploaded to database")
+
+def gather_eins(condition, db_or_manual_entry):
+    ein_list = []
+    if condition == "input_asked" and db_or_manual_entry == "enter":
+        print('Type esc or exit to end entries')
+        while True:
+            entry = input('EIN: ')
+            if entry == 'esc' or entry == 'exit':
+                break
             else:
-                print("XML file not found in extracted data.")
-        else:
-            print("File not found in any zip file or database.")
+                ein_list.append(entry)
+    elif condition == "input_asked" and db_or_manual_entry == "upload":
+        while True:
+            ein_db_file = input("Enter the name of the .db file to upload EINs from. Please make sure this file exists within 'sql > ein_db' : ")
+            if not ein_db_file.endswith(".db"):
+                ein_db_file += ".db"
+            ein_db_file_path = os.path.join(assumptions.ein_db_path, ein_db_file)
+            if not os.path.exists(ein_db_file_path):
+                print("File does not exist. Please try again.")
+            else:
+                break
+        ein_list = get_eins_from_db(ein_db_file_path)
+    elif condition == "input_from_assumptions" and db_or_manual_entry == "enter":
+        ein_list = assumptions.ein_list
+    elif condition == "input_from_assumptions" and db_or_manual_entry == "upload":
+        ein_list = get_eins_from_db(assumptions.ein_db_file)
+    return ein_list
 
-    # Modify officers table to board_of_dir_table_make so it can be loaded to a CSV in the right format
-    if output_preference == "csv" or output_preference == "modified_.db":
-        board_of_dir_table_make.main(output_db_path)
-        print("Modified .db created")
 
-    # Output to CSV if requested by user
-    if output_preference == "csv":
-        db_to_csv.main(output_db_path, csv_file_name)
-        print("CSV created")
+def get_eins_from_db(ein_db_file):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(ein_db_file)
+    cursor = conn.cursor()
 
+    # Query the 'ein' column from the 'organizations' table
+    cursor.execute("SELECT ein FROM organizations")
+    eins = [row[0] for row in cursor.fetchall()]
 
+    # Close the database connection
+    conn.close()
+
+    return eins
+
+    
 def initialize_db(output_db_path):
-    """Create or open a database and set up the required tables."""
+    # Create or open a database and set up the required tables
     conn = sqlite3.connect(output_db_path)
     cursor = conn.cursor()
     # Create table for officers
@@ -163,8 +179,7 @@ def initialize_db(output_db_path):
 
 
 def insert_officer_data(output_db_path, officers):
-    """Insert officer data into the database."""
-    print(f"Output_db_path: {output_db_path}")
+    # Insert officer data into the database
     conn = sqlite3.connect(output_db_path)
     cursor = conn.cursor()
     # Insert each officer entry
@@ -177,44 +192,12 @@ def insert_officer_data(output_db_path, officers):
     conn.commit()
     conn.close()
 
-def query_object_id_by_ein(ein_db_path, recreational_nonprofit_eins_path, upload_db_or_enter_manually):
-    if upload_db_or_enter_manually == "upload_db":
-        # Connect to the SQLite database to fetch all EINs
-        conn_eins = sqlite3.connect(recreational_nonprofit_eins_path)
-        cursor_eins = conn_eins.cursor()
-        cursor_eins.execute("SELECT ein FROM organizations")
-        eins_as_ints = [item[0] for item in cursor_eins.fetchall()]
-        conn_eins.close()
-        
-        # Convert each integer to a string using map
-        eins = list(map(str, eins_as_ints))
+def query_object_id_by_ein(ein_list):
+    # Establish path to index
+    annual_indexes = assumptions.annual_indexes  # Changed from assumptions.annual_indexes to assumptions.annual_indexes
 
-        # Count number of EINs so we know the max amount
-        total_eins = len(eins)
-
-        # Prompt the user for the number of EINs to parse
-        while True:
-            desired_ein_amount = (
-                input(
-                    f"Select quantity of EINs to parse (enter 'all' to retrieve all, max {total_eins}): "
-                ).strip().lower()
-            )
-            if desired_ein_amount == 'all':
-                limit = None
-                break
-            elif desired_ein_amount.isdigit():
-                limit = int(desired_ein_amount)
-                if limit <= total_eins:
-                    break
-                else:
-                    print(f"Error: Too high of a value, there are only {total_eins} EINs in the database.")
-            else:
-                print("Invalid input. Please enter a number or 'all'.")
-    
-    else:
-        # Using this value which has no place for the EIN specific search to function as the ein value
-        eins = recreational_nonprofit_eins_path
-        limit = None
+    # Using this value which has no place for the EIN specific search to function as the ein value
+    limit = None
 
     # Connect to the SQLite database to query object_ids
     object_ids = []
@@ -222,13 +205,13 @@ def query_object_id_by_ein(ein_db_path, recreational_nonprofit_eins_path, upload
     # Counter to reference EINs counted
     ein_counter = 0
 
-    for db_file in os.listdir(ein_db_path):
+    for db_file in os.listdir(annual_indexes):
         if db_file.endswith('.db'):
-            db_file_path = os.path.join(ein_db_path, db_file)
+            db_file_path = os.path.join(annual_indexes, db_file)
             conn = sqlite3.connect(db_file_path)
             cursor = conn.cursor()
 
-            for ein_input in eins:
+            for ein_input in ein_list:
                 # Remove any dashes from the EIN
                 processed_ein = ein_input.replace('-', '')
                 print("Processed EIN:", processed_ein)
@@ -248,7 +231,7 @@ def query_object_id_by_ein(ein_db_path, recreational_nonprofit_eins_path, upload
                 # Check if EIN limit is reached
                 ein_counter += 1
                 try:
-                    if limit and limit < ein_counter and upload_db_or_enter_manually == "upload_db":
+                    if limit and limit < ein_counter == "upload":
                         break
                 except TypeError:
                     continue
@@ -263,19 +246,8 @@ def query_object_id_by_ein(ein_db_path, recreational_nonprofit_eins_path, upload
     return object_ids
 
 
-# Define paths
-obj_id_db_path = assumptions.obj_id_db_path
-zip_folder_path = assumptions.zip_folder_path
-
-# Connect to SQLite database
-conn = sqlite3.connect(obj_id_db_path)
-c = conn.cursor()
-
-# Ensure the correct table is created
-c.execute('''CREATE TABLE IF NOT EXISTS xml_files (file_name TEXT, file_address TEXT)''')
-
-def find_file(filename):
-    """Look up the zip file path and internal XML file path from the database."""
+def find_file(filename, c):
+    # Look up the zip file path and internal XML file path from the database.
     c.execute("SELECT file_address FROM xml_files WHERE file_name=?", (filename,))
     result = c.fetchone()
     if result:
@@ -286,7 +258,7 @@ def find_file(filename):
     return None, None
 
 def extract_specific_file(zip_path, xml_file_path, extract_to):
-    """Extract a specific file from a zip archive."""
+    # Extract a specific file from a zip archive
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extract(xml_file_path, extract_to)
@@ -359,7 +331,40 @@ def extract_officers(xml_file, year):
         # Append the data dictionary to the list
         officers.append(officer_data)
 
-    return officers    
+    return officers
+    
+
+def gather_and_load_990_data_into_db(filenames, output_db_path):
+    # Connect to .db file that gives us the XML file addresses that we'll parse
+    c = sqlite3.connect(assumptions.obj_id_db_path).cursor()
+
+    # Connect to the zip folder holding our XML files
+    zip_folder_path = assumptions.zip_folder_path
+
+    for filename in filenames:
+        print("Filename:", filename)
+        year = filename[:4]  # Extract the year from the filename
+        if '_public.xml' not in filename:
+            filename += "_public.xml"
+        zip_file_path, xml_file_path = find_file(filename, c)
+        
+        if zip_file_path and xml_file_path:
+            extract_path = os.path.join(zip_folder_path, 'extracted')
+            extract_specific_file(zip_file_path, xml_file_path, extract_path)
+            extracted_xml_path = os.path.join(extract_path, xml_file_path)
+            
+            if os.path.exists(extracted_xml_path):
+                print(f"Found XML file: {extracted_xml_path}")
+                officers = extract_officers(extracted_xml_path, year)  # Pass the year to the function
+                print("Officers Found")
+                # Within your main logic:
+                insert_officer_data(output_db_path, officers)
+                print("Successfully uploaded to database")
+            else:
+                print("XML file not found in extracted data.")
+        else:
+            print("File not found in any zip file or database.")
+    print(".db file created")
 
 
 if __name__ == "__main__":

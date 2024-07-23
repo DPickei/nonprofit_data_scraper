@@ -31,7 +31,7 @@ def main(database_path=None):
     # Commit changes and close the connection
     conn.commit()
     conn.close()
-    print("Database updated successfully.")
+    print("Database cleaned successfully.")
 
 
 def normalize_data(cursor, conn):
