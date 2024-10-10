@@ -120,7 +120,12 @@ def gather_eins(condition, db_or_manual_entry):
         while True:
             entry = input('EIN: ')
             if entry == 'esc' or entry == 'exit':
+                print("ein list: ", ein_list)
                 break
+            elif ',' in entry:
+                entries = entry.split(',')
+                for ein in entries:
+                    ein_list.append(ein)
             else:
                 ein_list.append(entry)
     elif condition == "input_asked" and db_or_manual_entry == "upload":
@@ -196,56 +201,51 @@ def insert_officer_data(output_db_path, officers):
     conn.close()
 
 def query_object_id_by_ein(ein_list):
-    # Establish path to index
-    annual_indexes = assumptions.annual_indexes  # Changed from assumptions.annual_indexes to assumptions.annual_indexes
-
-    # Using this value which has no place for the EIN specific search to function as the ein value
-    limit = None
-
-    # Connect to the SQLite database to query object_ids
+    annual_indexes = assumptions.annual_indexes  # Directory containing .db files
     object_ids = []
-
-    # Counter to reference EINs counted
     ein_counter = 0
+    processed_eins = set()  # To keep track of EINs already processed
 
     for db_file in os.listdir(annual_indexes):
         if db_file.endswith('.db'):
             db_file_path = os.path.join(annual_indexes, db_file)
+            print(f"Processing database file: {db_file_path}")
             conn = sqlite3.connect(db_file_path)
             cursor = conn.cursor()
 
-            for ein_input in ein_list:
+            # Iterate over a copy of ein_list to allow removal
+            for ein_input in ein_list[:]:
+                if ein_input in processed_eins:
+                    continue  # Skip if already processed
+
                 # Remove any dashes from the EIN
-                processed_ein = ein_input.replace('-', '')
-                print("Processed EIN:", processed_ein)
+                processed_ein = ein_input.replace('-', '').strip()
+                print(f"Processed EIN: {processed_ein}")
 
                 # Perform the SQL query
                 cursor.execute("SELECT object_id FROM data WHERE ein = ?", (processed_ein,))
                 results = cursor.fetchall()
 
-                # Check if any results were found
                 if results:
-                    print("Object IDs found:")
+                    print(f"Object IDs found for EIN {processed_ein}: {[obj_id[0] for obj_id in results]}")
                     for obj_id in results:
                         object_ids.append(str(obj_id[0]))
+                    processed_eins.add(ein_input)  # Mark EIN as processed
+                    ein_list.remove(ein_input)  # Remove from list to prevent further searching
                 else:
-                    print("No results found for the given EIN.")
+                    print(f"No results found for EIN {processed_ein} in {db_file}.")
 
-                # Check if EIN limit is reached
-                ein_counter += 1
-                try:
-                    if limit and limit < ein_counter == "upload":
-                        break
-                except TypeError:
-                    continue
-
-            # Close the connection to the current DB file
             conn.close()
 
-            if limit and limit < ein_counter:
+            # If all EINs have been processed, exit early
+            if not ein_list:
+                print("All EINs have been processed.")
                 break
 
-    # Return the list of object IDs
+    # Handle EINs not found in any database
+    if ein_list:
+        print(f"The following EINs were not found in any database: {ein_list}")
+
     return object_ids
 
 
