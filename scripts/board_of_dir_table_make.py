@@ -62,7 +62,8 @@ def create_table(cursor):
             total_revenue INTEGER,
             city TEXT,
             state TEXT,
-            UNIQUE(person_name, org_name, years_of_service)
+            ein TEXT,  -- New column added
+            UNIQUE(person_name, org_name, years_of_service, ein)  -- Updated UNIQUE constraint
         )
     ''')
     print("Table recreated successfully.")
@@ -95,19 +96,41 @@ def populate_nonprofit_board_members(cursor, conn):
 
     for start in range(0, total_rows, BATCH_SIZE):
         cursor.execute(f'''
-            INSERT OR IGNORE INTO nonprofit_board_members (person_name, title, hours_per_week, org_name, years_of_service, total_revenue, city, state)
+            INSERT OR IGNORE INTO nonprofit_board_members (
+                person_name, title, hours_per_week, org_name, years_of_service, 
+                total_revenue, city, state, ein
+            )
             SELECT
                 UPPER(o.person_name),
                 UPPER(o.title),
-                (SELECT hours_per_week FROM officers o2 WHERE UPPER(o2.person_name) = UPPER(o.person_name) AND UPPER(o2.org_name) = UPPER(o.org_name) AND o2.year = (SELECT MAX(year) FROM officers WHERE UPPER(person_name) = UPPER(o2.person_name) AND UPPER(org_name) = UPPER(o2.org_name))) AS hours_per_week,
+                (SELECT hours_per_week FROM officers o2 
+                 WHERE UPPER(o2.person_name) = UPPER(o.person_name) 
+                   AND UPPER(o2.org_name) = UPPER(o.org_name) 
+                   AND o2.year = (SELECT MAX(year) 
+                                 FROM officers 
+                                 WHERE UPPER(person_name) = UPPER(o2.person_name) 
+                                   AND UPPER(org_name) = UPPER(o2.org_name))) AS hours_per_week,
                 UPPER(o.org_name),
                 GROUP_CONCAT(DISTINCT CAST(o.year AS TEXT)) AS years_of_service,
                 o.total_revenue,
-                UPPER((SELECT city FROM officers o3 WHERE UPPER(o3.person_name) = UPPER(o.person_name) AND UPPER(o3.org_name) = UPPER(o.org_name) AND o3.year = (SELECT MAX(year) FROM officers WHERE UPPER(person_name) = UPPER(o3.person_name) AND UPPER(org_name) = UPPER(o3.org_name)))) AS city,
-                UPPER((SELECT state FROM officers o4 WHERE UPPER(o4.person_name) = UPPER(o.person_name) AND UPPER(o4.org_name) = UPPER(o.org_name) AND o4.year = (SELECT MAX(year) FROM officers WHERE UPPER(person_name) = UPPER(o4.person_name) AND UPPER(org_name) = UPPER(o4.org_name)))) AS state
+                UPPER((SELECT city FROM officers o3 
+                       WHERE UPPER(o3.person_name) = UPPER(o.person_name) 
+                         AND UPPER(o3.org_name) = UPPER(o.org_name) 
+                         AND o3.year = (SELECT MAX(year) 
+                                       FROM officers 
+                                       WHERE UPPER(person_name) = UPPER(o3.person_name) 
+                                         AND UPPER(org_name) = UPPER(o3.org_name)))) AS city,
+                UPPER((SELECT state FROM officers o4 
+                       WHERE UPPER(o4.person_name) = UPPER(o.person_name) 
+                         AND UPPER(o4.org_name) = UPPER(o.org_name) 
+                         AND o4.year = (SELECT MAX(year) 
+                                       FROM officers 
+                                       WHERE UPPER(person_name) = UPPER(o4.person_name) 
+                                         AND UPPER(org_name) = UPPER(o4.org_name)))) AS state,
+                o.ein  -- Include EIN
             FROM officers o
             WHERE o.rowid BETWEEN {start} AND {start + BATCH_SIZE - 1}
-            GROUP BY UPPER(o.person_name), UPPER(o.org_name)
+            GROUP BY UPPER(o.person_name), UPPER(o.org_name), o.ein  -- Group by EIN as well
         ''')
         conn.commit()  # Commit after each batch to ensure changes are saved
         print(f"Data insertion in progress. Processed rows {start + 1} to {min(start + BATCH_SIZE, total_rows)}.")
