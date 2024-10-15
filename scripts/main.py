@@ -24,7 +24,7 @@ def main():
     ein_list = gather_eins(condition, db_or_manual_entry)
 
     # Find object IDs based on EINs
-    object_id_to_ein = query_object_id_by_ein(ein_list)  # This will map object_id to ein
+    ein_to_object_ids = query_object_id_by_ein(ein_list)  # This maps ein to a list of object_ids
 
     # Create the table to put our data into
     initialize_db(output_db_path)
@@ -32,7 +32,7 @@ def main():
     # --- Start of ETL process ---
 
     # Extract 990 data from identified filenames and place into output_db_path (.db) for transformations
-    gather_and_load_990_data_into_db(object_id_to_ein, output_db_path)
+    gather_and_load_990_data_into_db(ein_to_object_ids, output_db_path)
 
     # Transform the .db file created
     board_of_dir_table_make.main(output_db_path)
@@ -211,8 +211,7 @@ def insert_officer_data(output_db_path, officers):
 
 def query_object_id_by_ein(ein_list):
     annual_indexes = assumptions.annual_indexes  # Directory containing .db files
-    object_id_to_ein = {}  # Dictionary to map object_id to ein
-    processed_eins = set()  # To keep track of EINs already processed
+    ein_to_object_ids = {}  # Dictionary to map ein to a list of object_ids
 
     for db_file in os.listdir(annual_indexes):
         if db_file.endswith('.db'):
@@ -221,11 +220,7 @@ def query_object_id_by_ein(ein_list):
             conn = sqlite3.connect(db_file_path)
             cursor = conn.cursor()
 
-            # Iterate over a copy of ein_list to allow removal
-            for ein_input in ein_list[:]:
-                if ein_input in processed_eins:
-                    continue  # Skip if already processed
-
+            for ein_input in ein_list:
                 # Remove any dashes from the EIN
                 processed_ein = ein_input.replace('-', '').strip()
                 print(f"Processed EIN: {processed_ein}")
@@ -236,26 +231,21 @@ def query_object_id_by_ein(ein_list):
 
                 if results:
                     print(f"Object IDs found for EIN {processed_ein}: {[obj_id[0] for obj_id in results]}")
+                    # Initialize the list if the EIN is encountered for the first time
+                    if ein_input not in ein_to_object_ids:
+                        ein_to_object_ids[ein_input] = []
                     for obj_id in results:
                         object_id = str(obj_id[0])
-                        object_id_to_ein[object_id] = ein_input  # Map object_id to ein
-                    processed_eins.add(ein_input)  # Mark EIN as processed
-                    ein_list.remove(ein_input)  # Remove from list to prevent further searching
-                else:
-                    print(f"No results found for EIN {processed_ein} in {db_file}.")
-
+                        ein_to_object_ids[ein_input].append(object_id)
             conn.close()
 
-            # If all EINs have been processed, exit early
-            if not ein_list:
-                print("All EINs have been processed.")
-                break
-
     # Handle EINs not found in any database
-    if ein_list:
-        print(f"The following EINs were not found in any database: {ein_list}")
+    not_found_eins = [ein for ein in ein_list if ein not in ein_to_object_ids]
+    if not_found_eins:
+        print(f"The following EINs were not found in any database: {not_found_eins}")
 
-    return object_id_to_ein  # Return the mapping
+    return ein_to_object_ids  # Return the mapping from EIN to list of object_ids
+
 
 
 def find_file(filename, c):
@@ -348,38 +338,39 @@ def extract_officers(xml_file, year, ein):
 
     
 
-def gather_and_load_990_data_into_db(object_id_to_ein, output_db_path):
+def gather_and_load_990_data_into_db(ein_to_object_ids, output_db_path):
     # Connect to .db file that gives us the XML file addresses that we'll parse
     c = sqlite3.connect(assumptions.obj_id_db_path).cursor()
 
     # Connect to the zip folder holding our XML files
     zip_folder_path = assumptions.zip_folder_path
 
-    for object_id, ein in object_id_to_ein.items():
-        print("Object ID:", object_id)
-        year = object_id[:4]  # Extract the year from the object_id or filename as appropriate
-        filename = object_id  # Assuming object_id corresponds to filename; adjust if necessary
+    for ein, object_ids in ein_to_object_ids.items():
+        for object_id in object_ids:
+            print(f"Processing Object ID: {object_id} for EIN: {ein}")
+            year = object_id[:4]  # Extract the year from the object_id or filename as appropriate
+            filename = object_id  # Assuming object_id corresponds to filename; adjust if necessary
 
-        if '_public.xml' not in filename:
-            filename += "_public.xml"
-        zip_file_path, xml_file_path = find_file(filename, c)
-        
-        if zip_file_path and xml_file_path:
-            extract_path = os.path.join(zip_folder_path, 'extracted')
-            extract_specific_file(zip_file_path, xml_file_path, extract_path)
-            extracted_xml_path = os.path.join(extract_path, xml_file_path)
+            if '_public.xml' not in filename:
+                filename += "_public.xml"
+            zip_file_path, xml_file_path = find_file(filename, c)
             
-            if os.path.exists(extracted_xml_path):
-                print(f"Found XML file: {extracted_xml_path}")
-                officers = extract_officers(extracted_xml_path, year, ein)  # Pass the EIN to the function
-                print("Officers Found")
-                # Within your main logic:
-                insert_officer_data(output_db_path, officers)
-                print("Successfully uploaded to database")
+            if zip_file_path and xml_file_path:
+                extract_path = os.path.join(zip_folder_path, 'extracted')
+                extract_specific_file(zip_file_path, xml_file_path, extract_path)
+                extracted_xml_path = os.path.join(extract_path, xml_file_path)
+                
+                if os.path.exists(extracted_xml_path):
+                    print(f"Found XML file: {extracted_xml_path}")
+                    officers = extract_officers(extracted_xml_path, year, ein)  # Pass the EIN to the function
+                    print("Officers Found")
+                    # Insert the officer data into the database
+                    insert_officer_data(output_db_path, officers)
+                    print("Successfully uploaded to database")
+                else:
+                    print("XML file not found in extracted data.")
             else:
-                print("XML file not found in extracted data.")
-        else:
-            print("File not found in any zip file or database.")
+                print("File not found in any zip file or database.")
     print(".db file created")
 
 
