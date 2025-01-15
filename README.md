@@ -34,10 +34,8 @@ The existing [API](https://projects.propublica.org/nonprofits/api) from [ProPubl
 # How to run the code:
 1. Populate user input values of assumptions.py
 
-2. Execute 'python folder_initialization.py'
+2. Download desired years of 990 data [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) into 'nonprofit_raw_data > xml_files'. Ignore 'Index file for YYYY (CSV)'.
 
-3. Download desired years of 990 data [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) into 'nonprofit_raw_data > xml_files'. Ignore 'Index file for YYYY (CSV)'.
+3. Execute 'object_id_to_zip_address_database_maker'
 
-4. Execute 'object_id_to_zip_address_database_maker'
-
-5. Execute main.py with desired nonprofit EINs in a .db file or manually entered.
+4. Execute main.py with desired nonprofit EINs in a .db file or manually entered.
