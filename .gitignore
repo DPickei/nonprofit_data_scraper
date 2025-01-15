@@ -1,0 +1,11 @@
+outputs/csv_outputs/*
+!outputs/csv_outputs
+
+outputs/sql_outputs/*
+!outputs/sql_outputs
+
+nonprofit_raw_data/*
+
+config.json
+
+venv/
