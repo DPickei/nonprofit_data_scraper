@@ -1,1 +1,0 @@
-[ ] - Delete assumptions.py and use config file instead
