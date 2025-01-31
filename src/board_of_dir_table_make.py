@@ -1,14 +1,24 @@
+# board_of_dir_table_make.py
 # Purpose: This function will take the raw output of main.py and turn it into a db that can be converted to a csv file
 
 import sqlite3
+import os
+import json
 
-BATCH_SIZE = 1000
+# Load config.json from the parent directory (assuming 'scripts' is inside the root)
+config_file_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
+with open(config_file_path, 'r') as file:
+    config = json.load(file)
+
+BATCH_SIZE = config["BATCH_SIZE"]  # Moved from a hard-coded value to the config
 
 def main(database_path=None):
     if database_path is None:
         input_file = input("Enter the name of the file you'd like to modify: ")
         if not input_file.endswith(".db"):
             input_file += ".db"
+        database_path = input_file
+
     conn = sqlite3.connect(database_path)
     conn.execute('PRAGMA journal_mode=WAL')  # Enable WAL mode
     cursor = conn.cursor()
@@ -48,6 +58,7 @@ def normalize_data(cursor, conn):
 
     print(f"Normalization complete. {total_rows} rows processed.")
 
+
 def create_table(cursor):
     """Drop and recreate the table to reset with correct UNIQUE constraints."""
     cursor.execute('DROP TABLE IF EXISTS nonprofit_board_members')
@@ -68,6 +79,7 @@ def create_table(cursor):
     ''')
     print("Table recreated successfully.")
 
+
 def create_indexes(cursor):
     """Create indexes to improve query performance."""
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_person_name ON nonprofit_board_members (person_name)')
@@ -76,6 +88,7 @@ def create_indexes(cursor):
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_city ON nonprofit_board_members (city)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_state ON nonprofit_board_members (state)')
     print("Indexes created successfully.")
+
 
 def remove_duplicates(cursor):
     """Remove duplicates by keeping the entry with the highest id."""
@@ -88,6 +101,7 @@ def remove_duplicates(cursor):
         )
     ''')
     print("Duplicates removed.")
+
 
 def populate_nonprofit_board_members(cursor, conn):
     """Insert data ensuring no new duplicates are added and show progress."""
@@ -107,9 +121,9 @@ def populate_nonprofit_board_members(cursor, conn):
                  WHERE UPPER(o2.person_name) = UPPER(o.person_name) 
                    AND UPPER(o2.org_name) = UPPER(o.org_name) 
                    AND o2.year = (SELECT MAX(year) 
-                                 FROM officers 
-                                 WHERE UPPER(person_name) = UPPER(o2.person_name) 
-                                   AND UPPER(org_name) = UPPER(o2.org_name))) AS hours_per_week,
+                                  FROM officers 
+                                  WHERE UPPER(person_name) = UPPER(o2.person_name) 
+                                    AND UPPER(org_name) = UPPER(o2.org_name))) AS hours_per_week,
                 UPPER(o.org_name),
                 GROUP_CONCAT(DISTINCT CAST(o.year AS TEXT)) AS years_of_service,
                 o.total_revenue,
@@ -117,16 +131,16 @@ def populate_nonprofit_board_members(cursor, conn):
                        WHERE UPPER(o3.person_name) = UPPER(o.person_name) 
                          AND UPPER(o3.org_name) = UPPER(o.org_name) 
                          AND o3.year = (SELECT MAX(year) 
-                                       FROM officers 
-                                       WHERE UPPER(person_name) = UPPER(o3.person_name) 
-                                         AND UPPER(org_name) = UPPER(o3.org_name)))) AS city,
+                                        FROM officers 
+                                        WHERE UPPER(person_name) = UPPER(o3.person_name) 
+                                          AND UPPER(org_name) = UPPER(o3.org_name)))) AS city,
                 UPPER((SELECT state FROM officers o4 
                        WHERE UPPER(o4.person_name) = UPPER(o.person_name) 
                          AND UPPER(o4.org_name) = UPPER(o.org_name) 
                          AND o4.year = (SELECT MAX(year) 
-                                       FROM officers 
-                                       WHERE UPPER(person_name) = UPPER(o4.person_name) 
-                                         AND UPPER(org_name) = UPPER(o4.org_name)))) AS state,
+                                        FROM officers 
+                                        WHERE UPPER(person_name) = UPPER(o4.person_name) 
+                                          AND UPPER(org_name) = UPPER(o4.org_name)))) AS state,
                 o.ein  -- Include EIN
             FROM officers o
             WHERE o.rowid BETWEEN {start} AND {start + BATCH_SIZE - 1}
@@ -136,6 +150,7 @@ def populate_nonprofit_board_members(cursor, conn):
         print(f"Data insertion in progress. Processed rows {start + 1} to {min(start + BATCH_SIZE, total_rows)}.")
 
     print(f"Data insertion complete. {total_rows} rows processed.")
+
 
 if __name__ == "__main__":
     main()

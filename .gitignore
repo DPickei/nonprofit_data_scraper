@@ -8,7 +8,7 @@ nonprofit_raw_data/*
 
 config.json
 
-venv/
+.venv/*
 .env/*
 
 TODO.txt

@@ -11,6 +11,7 @@ import zipfile
 import os
 import subprocess
 import xml.etree.ElementTree as ET
+from datetime import datetime
 
 def main():
     # See if the user would like to manually enter values or use 'assumptions.py'
@@ -91,7 +92,7 @@ def make_sql_output_file(condition):
         output_db_path_folder = assumptions.output_db_path_folder
         output_db_path_name = input("Enter the name of the database (.db file) you'd like to make. Use 'datetime' for current datetime: ")
         if output_db_path_name == "datetime":
-            output_db_path_name = assumptions.current_datetime
+            output_db_path_name = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_db_path_name = "\\" + output_db_path_name
         if not output_db_path_name.endswith(".db"):
             output_db_path_name += ".db"
@@ -105,7 +106,7 @@ def make_csv_output_file(condition, output_preference):
     if condition == "input_asked" and output_preference in ["csv", "both"]:
         output_csv_file_name = input("Enter the name of the output CSV file. Use 'datetime' for current datetime: ")
         if output_csv_file_name == "datetime":
-            output_csv_file_name = assumptions.current_datetime
+            output_csv_file_name = datetime.now().strftime("%Y%m%d_%H%M%S")
     elif condition == "input_from_assumptions":
         output_csv_file_name = assumptions.output_csv_file_name
     return output_csv_file_name
