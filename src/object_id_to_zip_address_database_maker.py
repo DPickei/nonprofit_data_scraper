@@ -2,12 +2,18 @@ import sqlite3
 import zipfile
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+ROOT_DIR = Path(__file__).resolve().parent.parent  
+
 
 def create_zip_address_db():
     nonprofit_raw_data_folder = ROOT_DIR / "nonprofit_raw_data"
     zip_directory = nonprofit_raw_data_folder / "xml_files"
     database_path = nonprofit_raw_data_folder / "zip_address_by_object_id_database.db"
+
+    if database_path.is_file() is False:
+        print(f"No database found. Making a map of file paths from object IDs at: {database_path}")
+    else:
+        return
 
     # Open the database connection once
     conn = sqlite3.connect(database_path)
