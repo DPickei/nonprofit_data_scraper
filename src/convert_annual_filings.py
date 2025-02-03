@@ -11,11 +11,16 @@ def convert_csv_to_db():
     config = utility_functions.load_config()
 
     annual_filings_csv = Path(root_path) / config.get("pathing").get("annual_filings_csv")
-    print("Found annual_filings_csv")
     annual_filings_db = Path(root_path) / config.get("pathing").get("annual_filings_db")
-    print("Found .db index path")
+
+    if annual_filings_db.is_file() is False:
+        print("Annual filings database does not exist. Creating them from csv files")
     
-    print("Starting the conversion process...")
+    if annual_filings_csv.is_file() is False:
+        print(f"Please download index files for years you wish to find xml files for. See https://www.irs.gov/charities-non-profits/form-990-series-downloads for files and download them to {annual_filings_csv}")
+        exit(1)
+
+    print("Making annual_filings database")
     
     # Ensure the annual_filings_db directory exists
     if not os.path.exists(annual_filings_db):

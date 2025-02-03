@@ -1,14 +1,15 @@
 import sqlite3
 import zipfile
+import utility_functions
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent  
 
 
 def create_zip_address_db():
-    nonprofit_raw_data_folder = ROOT_DIR / "nonprofit_raw_data"
-    zip_directory = nonprofit_raw_data_folder / "xml_files"
-    database_path = nonprofit_raw_data_folder / "zip_address_by_object_id_database.db"
+    config = utility_functions.load_config()
+    zip_directory = Path(ROOT_DIR) / config.get("pathing").get("xml_files")
+    database_path = Path(ROOT_DIR) / config.get("pathing").get("zip_address_by_object_id_database")
 
     if database_path.is_file() is False:
         print(f"No database found. Making a map of file paths from object IDs at: {database_path}")
