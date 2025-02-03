@@ -60,7 +60,8 @@ def insert_officer_data(output_db_path, officers):
 
 
 def query_object_id_by_ein(ein_list):
-    annual_indexes = Path(ROOT_DIR) / "sql" / "annual_indexes"
+    annual_indexes_relative_path = config.get("pathing").get("annual_filings_db")
+    annual_indexes = Path(ROOT_DIR) / annual_indexes_relative_path
     ein_to_object_ids = {}
 
     for db_file in os.listdir(annual_indexes):

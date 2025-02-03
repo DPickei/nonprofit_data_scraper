@@ -3,5 +3,8 @@
     "941748806",
     "560685943"
   ],
-  "max_hours_filter": 12
+  "max_hours_filter": 12,
+  "pathing": {
+    "annual_filings_db": "nonprofit_raw_data/annual_filings_db"
+  }
   }

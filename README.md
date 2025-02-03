@@ -35,10 +35,10 @@ The existing [API](https://projects.propublica.org/nonprofits/api) from [ProPubl
 
 0. Install dependencies into a virtual environment
 
-1. Download desired years of 990 data  
+1. Download desired years of 990 data
     - Download from [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads)  
-    - Download into 'nonprofit_raw_data > xml_files'  
-    - Note: No need to download 'Index file for YYYY (CSV)'  
+    - Download xml files into 'nonprofit_raw_data > xml_files'  
+    - Download 'Index file for YYYY (CSV)' files into 'nonprofit_raw_data > annual_filings_csv'
 
 2. Populate config values  
     - ein_list: EINs of organizations you wish to gather data from. To find the EIN of an organization, use [this](https://projects.propublica.org/nonprofits/) search page  
