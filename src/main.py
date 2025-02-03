@@ -218,7 +218,7 @@ def gather_and_load_990_data_into_db(ein_to_object_ids, output_db_path):
 
 def main(config):
     current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_db_path = Path(ROOT_DIR) / "outputs" / "sql_outputs" / current_timestamp
+    output_db_path = Path(ROOT_DIR) / "outputs" / ".db" / current_timestamp
     output_csv_file_name = current_timestamp
     ein_list = config.get("ein_list", None)
 

@@ -11,7 +11,7 @@ def convert_csv_to_db():
     
     csv_index_path = Path(root_path) / "nonprofit_raw_data" / "index_files_csv"
     print("Found csv_index_path")
-    annual_indexes = Path(root_path) / "sql" / "annual_indexes"
+    annual_indexes = Path(root_path) / "annual_indexes"
     print("Found .db index path")
     
     print("Starting the conversion process...")
