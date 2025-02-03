@@ -22,7 +22,7 @@ def convert_db_to_csv(input_file=None, output_csv_file_name=None):
     # Define the file paths
     root_path = utility_functions.get_root()
     input_path = rf'{input_file}'
-    output_path = Path(root_path) / "outputs" / "csv_outputs" / current_timestamp
+    output_path = Path(root_path) / "outputs" / "csv" / current_timestamp
     
     try:
         # Connect to the SQLite database
