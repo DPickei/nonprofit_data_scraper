@@ -7,7 +7,7 @@ config_file_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
 with open(config_file_path, 'r') as file:
     config = json.load(file)
 
-BATCH_SIZE = config["BATCH_SIZE"]  # Moved from a hard-coded value to the config
+BATCH_SIZE = 1000  # Moved from a hard-coded value to the config
 
 def prep_data(database_path=None):
     if database_path is None:
