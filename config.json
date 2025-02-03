@@ -5,6 +5,11 @@
   ],
   "max_hours_filter": 12,
   "pathing": {
-    "annual_filings_db": "nonprofit_raw_data/annual_filings_db"
+    "annual_filings_csv": "nonprofit_raw_data/annual_filings_csv",
+    "annual_filings_db": "nonprofit_raw_data/annual_filings_db",
+    "xml_files": "nonprofit_raw_data/xml_files",
+    "zip_address_by_object_id_database": "nonprofit_raw_data/zip_address_by_object_id_database.db",
+    "outputs_db": "outputs/db",
+    "outputs_csv": "outputs/csv"
   }
   }

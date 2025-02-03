@@ -185,11 +185,11 @@ def extract_officers(xml_file, year, ein):
 
 def gather_and_load_990_data_into_db(ein_to_object_ids, output_db_path):
     # Connect to .db file that gives us the XML file addresses that we'll parse
-    mapping_db = Path(ROOT_DIR) / "nonprofit_raw_data" / "zip_address_by_object_id_database.db"
+    mapping_db = Path(ROOT_DIR) / config.get("pathing").get("zip_address_by_object_id_database")
     c = sqlite3.connect(mapping_db).cursor()
 
     # Connect to the zip folder holding our XML files
-    zip_folder_path = Path(ROOT_DIR) / "nonprofit_raw_data" / "xml_files"
+    zip_folder_path = Path(ROOT_DIR) / config.get("pathing").get("xml_files")
 
     for ein, object_ids in ein_to_object_ids.items():
         for object_id in object_ids:
@@ -203,7 +203,7 @@ def gather_and_load_990_data_into_db(ein_to_object_ids, output_db_path):
                 print("File not found in any zip file or database.")
                 continue
             
-            zip_file_path = Path(ROOT_DIR) / "nonprofit_raw_data" / "xml_files" / zip_file_name
+            zip_file_path = Path(ROOT_DIR) / config.get("pathing").get("xml_files") / zip_file_name
             extract_path = os.path.join(zip_folder_path, 'extracted')
             extract_specific_file(zip_file_path, filename, extract_path)
             extracted_xml_path = os.path.join(extract_path, filename)
@@ -219,7 +219,7 @@ def gather_and_load_990_data_into_db(ein_to_object_ids, output_db_path):
 
 def main(config):
     current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_db_path = Path(ROOT_DIR) / "outputs" / ".db" / current_timestamp
+    output_db_path = Path(ROOT_DIR) / config.get("pathing").get("outputs_db") / current_timestamp
     output_csv_file_name = current_timestamp
     ein_list = config.get("ein_list", None)
 

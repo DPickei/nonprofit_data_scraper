@@ -8,10 +8,11 @@ from pathlib import Path
 
 def convert_csv_to_db():
     root_path = utility_functions.get_root()
-    
+    config = utility_functions.load_config()
+
     csv_index_path = Path(root_path) / "nonprofit_raw_data" / "annual_filings_csv"
     print("Found csv_index_path")
-    annual_filings_db = Path(root_path) / "nonprofit_raw_data" / "annual_filings_db"
+    annual_filings_db = Path(root_path) / config.get("pathing").get("annual_filings_db")
     print("Found .db index path")
     
     print("Starting the conversion process...")

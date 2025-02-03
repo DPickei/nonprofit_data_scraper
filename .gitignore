@@ -1,5 +1,5 @@
 outputs/csv/*
-outputs/.db/*
+outputs/db/*
 nonprofit_raw_data/*
 annual_indexes/*
 data/*
