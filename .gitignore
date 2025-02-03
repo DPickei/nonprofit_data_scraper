@@ -1,14 +1,8 @@
-outputs/csv_outputs/*
-!outputs/csv_outputs
-
-outputs/sql_outputs/*
-!outputs/sql_outputs
-
+outputs/csv/*
+outputs/.db/*
 nonprofit_raw_data/*
+annual_indexes/*
 
-config.json
-
-.venv/*
-.env/*
+.venv/
 
 TODO.txt
