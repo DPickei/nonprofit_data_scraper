@@ -8,7 +8,7 @@ See "outputs / csv_outputs / sample_csv_output.csv" for an example of this outpu
 
 
 # Data points collected:
-
+  - "ein": EIN of the organization
   - "person_name": The name of the board member
   - "city": The city in which the associated nonprofit is filed from
   - "state": The state in which the associated nonprofit is filed from
@@ -32,10 +32,16 @@ The existing [API](https://projects.propublica.org/nonprofits/api) from [ProPubl
 
 
 # How to run the code:
-1. Populate user input values of assumptions.py
+0. Install dependencies into a virtual environment
 
-2. Download desired years of 990 data [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) into 'nonprofit_raw_data > xml_files'. Ignore 'Index file for YYYY (CSV)'.
+1. Download desired years of 990 data 
+  - Download from [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) 
+  - Download into 'nonprofit_raw_data > xml_files'
+  - Note: No need to download 'Index file for YYYY (CSV)'
 
-3. Execute 'object_id_to_zip_address_database_maker'
+2. Populate config values
+  - ein_list: EINs of organizations you wish to gather data from. To find the EIN of an organization, use [this](https://projects.propublica.org/nonprofits/) search page
+  - max_hours_filter: Maximum number of hours a person can have. This filter exists because board members will usually work under 40 hours and full time employees will usually work about 40, so this filter allows us to differentiate between the two roles in some approximate way.
 
-4. Execute main.py with desired nonprofit EINs in a .db file or manually entered.
+3. Execute main.py
+  - Note: On the first execution of main.py, a function will be triggered to create a database, which may take some time to complete.
