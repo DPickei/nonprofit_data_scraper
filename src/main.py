@@ -7,6 +7,8 @@ import os
 import subprocess
 import xml.etree.ElementTree as ET
 import utility_functions
+import object_id_to_zip_address_database_maker
+import convert_annual_filings
 from pathlib import Path
 from datetime import datetime
 
@@ -218,6 +220,10 @@ def gather_and_load_990_data_into_db(ein_to_object_ids, output_db_path):
 
 
 def main(config):
+    # Check if initial databases are configured
+    convert_annual_filings.convert_csv_to_db()
+    object_id_to_zip_address_database_maker.create_zip_address_db()
+    
     current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_db_path = Path(ROOT_DIR) / config.get("pathing").get("outputs_db") / current_timestamp
     output_csv_file_name = current_timestamp

@@ -13,10 +13,12 @@ def convert_csv_to_db():
     annual_filings_csv = Path(root_path) / config.get("pathing").get("annual_filings_csv")
     annual_filings_db = Path(root_path) / config.get("pathing").get("annual_filings_db")
 
-    if annual_filings_db.is_file() is False:
+    if annual_filings_db.stat().st_size == 0:
         print("Annual filings database does not exist. Creating them from csv files")
+    else:
+        return
     
-    if annual_filings_csv.is_file() is False:
+    if annual_filings_csv.stat().st_size == 0:
         print(f"Please download index files for years you wish to find xml files for. See https://www.irs.gov/charities-non-profits/form-990-series-downloads for files and download them to {annual_filings_csv}")
         exit(1)
 
