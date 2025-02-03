@@ -1,5 +1,3 @@
-# Purpose: This script will collect the EINs of all nonprofits from the given API
-# Note: The propublica API has a rate limit of ~10,000
 import requests
 import sqlite3
 import utility_functions
