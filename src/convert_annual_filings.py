@@ -10,8 +10,8 @@ def convert_csv_to_db():
     root_path = utility_functions.get_root()
     config = utility_functions.load_config()
 
-    csv_index_path = Path(root_path) / "nonprofit_raw_data" / "annual_filings_csv"
-    print("Found csv_index_path")
+    annual_filings_csv = Path(root_path) / config.get("pathing").get("annual_filings_csv")
+    print("Found annual_filings_csv")
     annual_filings_db = Path(root_path) / config.get("pathing").get("annual_filings_db")
     print("Found .db index path")
     
@@ -25,10 +25,10 @@ def convert_csv_to_db():
         print(f"Directory exists: {annual_filings_db}")
 
     # Get the list of CSV files and existing DB files in the annual_filings_db folder
-    csv_files = [f for f in os.listdir(csv_index_path) if f.endswith('.csv')]
+    csv_files = [f for f in os.listdir(annual_filings_csv) if f.endswith('.csv')]
     db_files = [f for f in os.listdir(annual_filings_db) if f.endswith('.db')]
     
-    print(f"Found {len(csv_files)} CSV files in {csv_index_path}")
+    print(f"Found {len(csv_files)} CSV files in {annual_filings_csv}")
     print(f"Found {len(db_files)} DB files in {annual_filings_db}")
 
     # Process each CSV file
@@ -39,7 +39,7 @@ def convert_csv_to_db():
             print(f"Skipping {csv_file} as corresponding DB file already exists in annual_filings_db.")
             continue
 
-        csv_path = os.path.join(csv_index_path, csv_file)
+        csv_path = os.path.join(annual_filings_csv, csv_file)
         db_path = os.path.join(annual_filings_db, db_file_name)
 
         print(f"Processing {csv_file}...")
