@@ -1,15 +1,17 @@
 # Purpose: This script converts publicly available CSV files into .db files
 # Reason: This is so we can match EINs to Obj IDs, which will allow us to locate XML files
-
 import os
 import pandas as pd
 import sqlite3
-import assumptions
+import utility_functions
+from pathlib import Path
 
 def convert_csv_to_db():
-    csv_index_path = assumptions.csv_index_path
+    root_path = utility_functions.get_root()
+    
+    csv_index_path = Path(root_path) / "nonprofit_raw_data" / "index_files_csv"
     print("Found csv_index_path")
-    annual_indexes = assumptions.annual_indexes
+    annual_indexes = Path(root_path) / "sql" / "annual_indexes"
     print("Found .db index path")
     
     print("Starting the conversion process...")

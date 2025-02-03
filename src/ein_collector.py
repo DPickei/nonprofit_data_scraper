@@ -1,17 +1,16 @@
 # Purpose: This script will collect the EINs of all nonprofits from the given API
 # Note: The propublica API has a rate limit of ~10,000
-
-import assumptions
 import requests
 import sqlite3
-import os
+import utility_functions
+from pathlib import Path
 
-def main():
+def collect_eins():
     nonprofit_type = input("Enter the type of nonprofit you'd like to retrieve EINs for. E.g., for a 501(c)(4) nonprofit, enter '4': ")
     filename = input("Enter the filename to store the EINs: ") + ".db"
-    print(filename)
     max_eins_to_retrieve = min(int(input("Enter the number of EINs you'd like to retrieve (up to 10,000): ")), 10000)
-    database_path = os.path.join(assumptions.project_folder_location, "sql", "ein_db", filename)
+    root_path = utility_functions.get_root()
+    database_path = Path(root_path) / "sql" / "ein_db" / filename
 
     create_database(database_path)
     fetch_and_store_eins(nonprofit_type, database_path, max_eins_to_retrieve)
@@ -69,4 +68,4 @@ def fetch_and_store_eins(nonprofit_type, database_path, max_eins_to_retrieve):
 
 
 if __name__ == "__main__":
-    main()
+    collect_eins()

@@ -1,6 +1,3 @@
-# board_of_dir_table_make.py
-# Purpose: This function will take the raw output of main.py and turn it into a db that can be converted to a csv file
-
 import sqlite3
 import os
 import json
@@ -12,7 +9,7 @@ with open(config_file_path, 'r') as file:
 
 BATCH_SIZE = config["BATCH_SIZE"]  # Moved from a hard-coded value to the config
 
-def main(database_path=None):
+def prep_data(database_path=None):
     if database_path is None:
         input_file = input("Enter the name of the file you'd like to modify: ")
         if not input_file.endswith(".db"):
@@ -153,4 +150,4 @@ def populate_nonprofit_board_members(cursor, conn):
 
 
 if __name__ == "__main__":
-    main()
+    prep_data()
