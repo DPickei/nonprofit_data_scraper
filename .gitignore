@@ -1,6 +1,7 @@
 outputs/csv/*
 outputs/db/*
 nonprofit_raw_data/*
+!nonprofit_raw_data.gitkeep
 annual_indexes/*
 data/*
 
