@@ -35,13 +35,13 @@ The existing [API](https://projects.propublica.org/nonprofits/api) from [ProPubl
 0. Install dependencies into a virtual environment
 
 1. Download desired years of 990 data 
-  - Download from [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) 
-  - Download into 'nonprofit_raw_data > xml_files'
-  - Note: No need to download 'Index file for YYYY (CSV)'
+    - Download from [here](https://www.irs.gov/charities-non-profits/form-990-series-downloads) 
+    - Download into 'nonprofit_raw_data > xml_files'
+    - Note: No need to download 'Index file for YYYY (CSV)'
 
 2. Populate config values
-  - ein_list: EINs of organizations you wish to gather data from. To find the EIN of an organization, use [this](https://projects.propublica.org/nonprofits/) search page
-  - max_hours_filter: Maximum number of hours a person can have. This filter exists because board members will usually work under 40 hours and full time employees will usually work about 40, so this filter allows us to differentiate between the two roles in some approximate way.
+    - ein_list: EINs of organizations you wish to gather data from. To find the EIN of an organization, use [this](https://projects.propublica.org/nonprofits/) search page
+    - max_hours_filter: Maximum number of hours a person can have. This filter exists because board members will usually work under 40 hours and full time employees will usually work about 40, so this filter allows us to differentiate between the two roles in some approximate way.
 
 3. Execute main.py
-  - Note: On the first execution of main.py, a function will be triggered to create a database, which may take some time to complete.
+    - Note: On the first execution of main.py, a function will be triggered to create a database, which may take some time to complete.
