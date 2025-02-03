@@ -154,7 +154,7 @@ def extract_officers(xml_file, year, ein):
             try:
                 hours = float(hours_per_week.text)
                 # Skip adding to the list if hours are greater than 10
-                if hours > config.get("max_hours"):
+                if hours > config.get("max_hours_filter"):
                     continue
             except ValueError:
                 # Handle cases where conversion is not possible
